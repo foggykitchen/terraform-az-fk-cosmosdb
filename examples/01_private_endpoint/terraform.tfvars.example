@@ -1,0 +1,3 @@
+resource_group_name = "fk-rg-cosmosdb01"
+location            = "westeurope"
+name_prefix         = "fk-cosmos01"
