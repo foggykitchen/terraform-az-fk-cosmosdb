@@ -44,3 +44,16 @@ output "sql_container_ids" {
     container_name => container.id
   }
 }
+
+output "diagnostic_setting_ids" {
+  description = "Map of diagnostic setting resource IDs keyed by diagnostic setting key."
+  value = {
+    for setting_key, setting in azurerm_monitor_diagnostic_setting.this :
+    setting_key => setting.id
+  }
+}
+
+output "cmk_enabled" {
+  description = "Whether customer-managed key encryption is enabled."
+  value       = var.key_vault_key_id != null
+}

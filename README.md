@@ -42,6 +42,7 @@ Depending on configuration and example used, the module can create:
 - Optional virtual network service endpoint rules
 - Optional CORS rules
 - Optional managed identity assignment
+- Optional Azure Monitor diagnostic settings
 - Public or Private Endpoint integration patterns when composed with other FoggyKitchen modules
 
 The module intentionally does not create:
@@ -50,6 +51,7 @@ The module intentionally does not create:
 - Virtual Networks or subnets
 - Private DNS Zones
 - Private Endpoints
+- Log Analytics Workspaces
 - Network Security Groups
 - Bastion hosts or validation clients
 - Application data, stored procedures, triggers, or seed data
@@ -64,6 +66,8 @@ Each of those concerns belongs in its own dedicated module or example layer.
 terraform-az-fk-cosmosdb/
 ├── examples/
 │   ├── 01_private_endpoint/
+│   ├── 02_diagnostics/
+│   ├── 03_customer_managed_key/
 │   └── README.md
 ├── main.tf
 ├── inputs.tf
@@ -116,6 +120,31 @@ module "cosmosdb" {
 
 For Private Endpoint patterns, compose this module with `terraform-az-fk-private-endpoint` using subresource `Sql` and Private DNS Zone `privatelink.documents.azure.com`.
 
+### Diagnostic Settings
+
+Diagnostic settings are disabled by default. Configure one or more entries in `diagnostic_settings` to send Cosmos DB logs and metrics to Log Analytics, Storage, or Event Hubs.
+
+```hcl
+diagnostic_settings = {
+  log_analytics = {
+    name                           = "fk-cosmos-diag"
+    log_analytics_workspace_id     = module.log_analytics.id
+    log_analytics_destination_type = "Dedicated"
+    metric_categories              = ["Requests"]
+  }
+}
+```
+
+When `log_categories` is omitted or set to `null`, the module enables the Cosmos DB resource-specific log categories:
+
+- `DataPlaneRequests`
+- `QueryRuntimeStatistics`
+- `PartitionKeyStatistics`
+- `PartitionKeyRUConsumption`
+- `ControlPlaneRequests`
+
+The default `log_analytics_destination_type` is `Dedicated`, which sends supported Cosmos DB logs to resource-specific Log Analytics tables. Use `terraform-az-fk-log-analytics` v1.x to create or reference the workspace in an upstream composition layer, then pass the workspace resource ID to `diagnostic_settings[*].log_analytics_workspace_id`.
+
 ---
 
 ## Module Inputs
@@ -155,6 +184,7 @@ For Private Endpoint patterns, compose this module with `terraform-az-fk-private
 | `identity` | `object` | No | Managed identity assigned to the account |
 | `sql_databases` | `map(object)` | No | Cosmos DB SQL databases to create |
 | `sql_containers` | `map(object)` | No | Cosmos DB SQL containers to create |
+| `diagnostic_settings` | `map(object)` | No | Azure Monitor diagnostic settings |
 | `tags` | `map(string)` | No | Resource tags |
 
 ### SQL database object schema
@@ -165,6 +195,21 @@ sql_databases = map(object({
   autoscale_settings = optional(object({
     max_throughput = optional(number)
   }))
+}))
+```
+
+### Diagnostic settings object schema
+
+```hcl
+diagnostic_settings = map(object({
+  name                           = string
+  log_analytics_workspace_id     = optional(string)
+  log_analytics_destination_type = optional(string, "Dedicated")
+  storage_account_id             = optional(string)
+  eventhub_authorization_rule_id = optional(string)
+  eventhub_name                  = optional(string)
+  log_categories                 = optional(list(string))
+  metric_categories              = optional(list(string), ["Requests"])
 }))
 ```
 
@@ -218,6 +263,8 @@ sql_containers = map(object({
 | `primary_sql_connection_string` | Primary SQL API connection string |
 | `sql_database_ids` | Map of SQL database resource IDs keyed by database name |
 | `sql_container_ids` | Map of SQL container resource IDs keyed by container name |
+| `diagnostic_setting_ids` | Map of diagnostic setting resource IDs keyed by diagnostic setting key |
+| `cmk_enabled` | Whether customer-managed key encryption is enabled |
 
 ---
 
@@ -226,6 +273,8 @@ sql_containers = map(object({
 | Example | Description |
 |---------|-------------|
 | `01_private_endpoint` | Cosmos DB SQL API account, database, and container composed with Azure Private Endpoint and Private DNS Zone Group |
+| `02_diagnostics` | Cosmos DB SQL API account with Azure Monitor diagnostic settings sent to Log Analytics using Dedicated destination type |
+| `03_customer_managed_key` | Cosmos DB SQL API account with Private Endpoint and customer-managed key encryption using Key Vault and user-assigned identity |
 
 See [`examples/`](examples) for details.
 

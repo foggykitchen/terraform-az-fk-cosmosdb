@@ -237,3 +237,37 @@ resource "azurerm_cosmosdb_sql_container" "this" {
     }
   }
 }
+
+resource "azurerm_monitor_diagnostic_setting" "this" {
+  for_each = var.diagnostic_settings
+
+  name                           = each.value.name
+  target_resource_id             = azurerm_cosmosdb_account.this.id
+  log_analytics_workspace_id     = each.value.log_analytics_workspace_id
+  log_analytics_destination_type = each.value.log_analytics_workspace_id == null ? null : each.value.log_analytics_destination_type
+  storage_account_id             = each.value.storage_account_id
+  eventhub_authorization_rule_id = each.value.eventhub_authorization_rule_id
+  eventhub_name                  = each.value.eventhub_name
+
+  dynamic "enabled_log" {
+    for_each = toset(coalesce(each.value.log_categories, [
+      "DataPlaneRequests",
+      "QueryRuntimeStatistics",
+      "PartitionKeyStatistics",
+      "PartitionKeyRUConsumption",
+      "ControlPlaneRequests"
+    ]))
+
+    content {
+      category = enabled_log.value
+    }
+  }
+
+  dynamic "enabled_metric" {
+    for_each = toset(each.value.metric_categories)
+
+    content {
+      category = enabled_metric.value
+    }
+  }
+}

@@ -12,6 +12,8 @@ These examples are part of the [FoggyKitchen.com training ecosystem](https://fog
 | Example | Title | Key Topics |
 |:-------:|:------|:-----------|
 | 01 | **Private Endpoint** | Cosmos DB SQL API account, SQL database, SQL container, FoggyKitchen Private Endpoint module, Private DNS Zone Group |
+| 02 | **Diagnostic Settings** | Cosmos DB SQL API account, Log Analytics Workspace, Azure Monitor diagnostic settings, Dedicated destination type |
+| 03 | **Customer-Managed Key Encryption** | Cosmos DB SQL API account, Key Vault, RSA key, user-assigned managed identity, RBAC, Private Endpoint |
 
 ---
 
@@ -33,10 +35,12 @@ tofu plan
 tofu apply
 ```
 
-The current free learning path contains one minimal example:
+The current free learning path contains three minimal examples:
 
 ```text
 01
+02
+03
 ```
 
 Larger platform compositions belong in FoggyKitchen landing zones or blueprints, not in free module examples.

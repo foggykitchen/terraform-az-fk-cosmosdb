@@ -267,6 +267,31 @@ variable "sql_containers" {
   default = {}
 }
 
+variable "diagnostic_settings" {
+  description = "Map of Azure Monitor diagnostic settings for the Cosmos DB account."
+  type = map(object({
+    name                           = string
+    log_analytics_workspace_id     = optional(string)
+    log_analytics_destination_type = optional(string, "Dedicated")
+    storage_account_id             = optional(string)
+    eventhub_authorization_rule_id = optional(string)
+    eventhub_name                  = optional(string)
+    log_categories                 = optional(list(string))
+    metric_categories              = optional(list(string), ["Requests"])
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for setting in values(var.diagnostic_settings) :
+      setting.log_analytics_workspace_id != null ||
+      setting.storage_account_id != null ||
+      setting.eventhub_authorization_rule_id != null
+    ])
+    error_message = "Each diagnostic_settings entry must set at least one destination: log_analytics_workspace_id, storage_account_id, or eventhub_authorization_rule_id."
+  }
+}
+
 variable "tags" {
   description = "Common tags."
   type        = map(string)

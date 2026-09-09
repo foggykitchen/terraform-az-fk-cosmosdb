@@ -1,0 +1,11 @@
+resource_group_name = "fk-rg-cosmosdb03"
+location            = "westeurope"
+name_prefix         = "fk-cosmos03"
+
+key_vault_key_name = "cosmosdb-cmk"
+
+tags = {
+  project     = "foggykitchen"
+  environment = "dev"
+  managed_by  = "opentofu"
+}
